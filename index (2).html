@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Central undimotriu de Perth (CETO 5): simulador</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap">
+<style>
+:root{--bg:#eef3f6;--card:#fff;--ink:#0c2433;--mute:#566f7d;--line:#d3e0e7;--teal:#0f8fa3;--amber:#e8961f;--ok:#1b8a5a;--bad:#b3402f;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#07151e;--card:#0f2431;--ink:#e7f2f7;--mute:#9bb4c1;--line:#21424f;--teal:#2cc3d8;--amber:#f5b049;--ok:#4cc38a;--bad:#ea7662;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#07151e;--card:#0f2431;--ink:#e7f2f7;--mute:#9bb4c1;--line:#21424f;--teal:#2cc3d8;--amber:#f5b049;--ok:#4cc38a;--bad:#ea7662;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.45}
+main{max-width:1100px;margin:0 auto;padding:18px 14px 44px}
+h1{font-size:1.7rem;margin:0;letter-spacing:-.02em;font-weight:800}
+.sub{color:var(--mute);margin:4px 0 14px;max-width:75ch}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+@media (max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 12px}
+.kpi b{display:block;font-size:1.25rem;font-variant-numeric:tabular-nums}
+.kpi span{font-size:.76rem;color:var(--mute)}
+.grid{display:grid;grid-template-columns:310px 1fr;gap:14px}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+.card h2{font-size:.95rem;margin:0 0 6px;font-weight:800}
+.card h3{font-size:.82rem;margin:14px 0 0;color:var(--teal);font-weight:800}
+label{display:flex;justify-content:space-between;font-weight:600;font-size:.86rem;margin:9px 0 2px}
+label output{color:var(--teal);font-variant-numeric:tabular-nums;font-weight:800}
+input[type=range]{width:100%;accent-color:var(--teal)}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.btns button,.play{padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);font:700 .8rem inherit;font-family:inherit;cursor:pointer}
+.play{width:100%;background:var(--amber);border:0;color:#1a1100;font-size:.92rem;padding:10px;margin-top:12px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+canvas{width:100%;display:block;border-radius:10px}
+#c1{cursor:pointer}
+.info{border-left:4px solid var(--teal);padding:4px 12px;margin-top:10px}
+.info b{display:block}.info p{margin:2px 0;font-size:.88rem}
+table{width:100%;border-collapse:collapse;font-size:.84rem}
+td{padding:6px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+td:first-child{color:var(--mute);width:42%}
+.tag{font-size:.7rem;font-weight:800;padding:1px 6px;border-radius:6px;margin-left:4px;white-space:nowrap}
+.v{background:#d9f1e5;color:#12633f}.m{background:#fbe6c5;color:#7a4a05}
+.note{color:var(--mute);font-size:.78rem;margin-top:8px}
+</style>
+</head>
+<body>
+<main>
+<h1>La central undimotriu de Perth (CETO 5)</h1>
+<p class="sub">Simulador de la central de Garden Island (Austràlia). Mou el Sol, la Lluna i les ones, i clica sobre les peces de l’esquema per veure’n les dades tècniques. Cada dada indica si és verificada o si és d’un model.</p>
+<div class="kpis">
+<div class="kpi"><b id="k1">–</b><span>Alçada de l’ona (m)</span></div>
+<div class="kpi"><b id="k2">–</b><span>Potència de l’ona (kW/m)</span></div>
+<div class="kpi"><b id="k3">–</b><span>Marea (m)</span></div>
+<div class="kpi"><b id="k4">–</b><span>Profunditat de la boia (m)</span></div>
+<div class="kpi"><b id="k5">–</b><span>Potència de la central (kW)</span></div>
+<div class="kpi"><b id="k6">–</b><span>Factor de càrrega</span></div>
+<div class="kpi"><b id="k7">–</b><span>Energia estimada per dia (kWh)</span></div>
+<div class="kpi"><b id="k8">–</b><span>Energia acumulada (kWh)</span></div>
+</div>
+<div class="grid">
+<div>
+<div class="card">
+<h2>Controls</h2>
+<h3>Ones</h3>
+<label for="wh">Alçada de l’ona <output id="o_wh"></output></label><input id="wh" type="range" min="0.2" max="5" step="0.1" value="2">
+<label for="wt">Temps entre ones <output id="o_wt"></output></label><input id="wt" type="range" min="4" max="14" step="0.5" value="8">
+<label for="wn">Nombre de boies <output id="o_wn"></output></label><input id="wn" type="range" min="1" max="10" step="1" value="3">
+<h3>Sol</h3>
+<label for="doy">Dia de l’any <output id="o_doy"></output></label><input id="doy" type="range" min="1" max="365" step="1" value="196">
+<label for="hr">Hora del dia <output id="o_hr"></output></label><input id="hr" type="range" min="0" max="23.9" step="0.1" value="9">
+<h3>Lluna</h3>
+<label for="age">Edat de la Lluna <output id="o_age"></output></label><input id="age" type="range" min="0" max="29.5" step="0.1" value="7">
+<label for="dist">Distància a la Lluna <output id="o_dist"></output></label><input id="dist" type="range" min="356500" max="406700" step="500" value="384400">
+<label for="decl">Declinació de la Lluna <output id="o_decl"></output></label><input id="decl" type="range" min="-28.5" max="28.5" step="0.5" value="20">
+<h3>Temps</h3>
+<label for="spd">Velocitat <output id="o_spd"></output></label><input id="spd" type="range" min="0.5" max="12" step="0.5" value="2">
+<button class="play" id="play">⏸ Pausar</button>
+<div class="btns"><button data-p="calm">Mar en calma</button><button data-p="norm">Dia normal</button><button data-p="storm">Temporal d’hivern</button><button data-p="new">Lluna nova</button><button data-p="full">Lluna plena</button></div>
+</div>
+</div>
+<div>
+<div class="card"><h2>La central en directe (clica una peça)</h2><canvas id="c1"></canvas>
+<div class="info" id="info"></div></div>
+<div class="card"><h2>Últimes 24 hores simulades: potència (verd) i marea (taronja)</h2><canvas id="c2"></canvas></div>
+</div>
+</div>
+<div class="card"><h2>Fitxa tècnica del Perth Wave Energy Project</h2>
+<table>
+<tr><td>Ubicació</td><td>Garden Island, a uns 61 km al sud de Perth <span class="tag v">verificat</span></td></tr>
+<tr><td>Aparells</td><td>3 × CETO 5, de ≈240 kW cadascun (0,72 MW) <span class="tag v">verificat</span></td></tr>
+<tr><td>Boia (actuador flotant)</td><td>Ø 11 m (la CETO 3 feia 7 m), 1–2 m sota la superfície <span class="tag v">verificat</span></td></tr>
+<tr><td>Bombes al fons</td><td>25–50 m de fondària <span class="tag v">verificat</span></td></tr>
+<tr><td>Pressió</td><td>77 bar sostinguts a la CETO 3 (80 kW). Dada de la CETO 5 no trobada <span class="tag v">verificat (CETO 3)</span></td></tr>
+<tr><td>Circuit</td><td>Tancat: pressió cap a terra i retorn per una segona canonada <span class="tag v">verificat</span></td></tr>
+<tr><td>A terra</td><td>Turbina hidroelèctrica convencional, generador i dessaladora <span class="tag v">verificat</span></td></tr>
+<tr><td>Client</td><td>Departament de Defensa: base naval HMAS Stirling <span class="tag v">verificat</span></td></tr>
+<tr><td>Funcionament</td><td>Novembre del 2014 a desembre del 2015; més de 14.000 hores acumulades <span class="tag v">verificat</span></td></tr>
+<tr><td>Energia enviada a la xarxa</td><td>Uns 12.000 kWh en tot el període, segons l’empresa <span class="tag v">verificat</span></td></tr>
+<tr><td>Cost</td><td>Entre 32 i 40 milions de dòlars australians (les fonts no coincideixen) <span class="tag v">verificat</span></td></tr>
+<tr><td>Disponibilitat de disseny</td><td>L’empresa deia que produiria més del 97 % del temps en llocs molt energètics <span class="tag v">objectiu de l’empresa</span></td></tr>
+<tr><td>Marea a la zona</td><td>Sobretot diürna (una al dia), normalment d’uns 0,5 m i de més d’1 m en vives <span class="tag v">verificat</span></td></tr>
+<tr><td>Fórmules del simulador</td><td>Potència de l’ona = 0,49 · H² · T (kW/m); captació del 30 % sobre 11 m; límit de 240 kW; sense producció per sota de 0,5 m; efecte de la profunditat de la boia; onatge un ± 25 % segons l’estació <span class="tag m">model</span></td></tr>
+</table>
+<p class="note">Les dades verificades són de Carnegie, ARENA, Tethys (PNNL), Wikipedia (CETO), ScienceAlert, Fremantle Ports i articles científics. El rendiment, la marea i l’efecte del Sol i la Lluna són un model simplificat, no mesures reals. A la realitat, l’empresa va dir que l’energia produïda no era important dins d’un cicle de demostració.</p>
+</div>
+</main>
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)},cs=function(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()};
+var fmt=function(n,d){return n.toLocaleString("ca-ES",{maximumFractionDigits:d||0,minimumFractionDigits:d||0})};
+var D2R=Math.PI/180,S={H:2,T:8,N:3,doy:196,hr:9,age:7,dist:384400,decl:20,spd:2},play=true,wt=0,simH=0,acc=0,hist=[],lastS=0,sel="buoy",hot=[],cx={},M={};
+var key={wh:"H",wt:"T",wn:"N",doy:"doy",hr:"hr",age:"age",dist:"dist",decl:"decl",spd:"spd"};
+var INFO={
+buoy:["Boia CETO 5 (actuador flotant)","Diàmetre de 11 m i potència nominal d’uns 240 kW. Va submergida a 1–2 m sota la superfície i es mou amb l’onatge. L’empresa deia que podia gestionar potències instantànies de més d’1 MW. [Carnegie 2012, Tethys]"],
+tether:["Cable d’ancoratge","Una corda marina que lliga la boia a la bomba del fons. Quan la boia puja i baixa, estira el cable. [ARENA, Tethys]"],
+pump:["Bomba del fons marí","Està entre 25 i 50 m de fondària. S’estira i es comprimeix, i pressuritza el fluid. A la CETO 3 es va mesurar una pressió sostinguda de 77 bar (potència de 80 kW). Cada unitat té un pilar i una connexió ràpida. [ScienceAlert, Wikipedia, Carnegie 2012]"],
+pipe:["Canonada submarina","Porta l’aigua a pressió cap a terra, i una segona canonada la torna a baixa pressió: circuit tancat. Cada unitat connecta al col·lector central de l’array. [Tethys, Carnegie 2012]"],
+plant:["Central a terra","Una turbina hidroelèctrica convencional mou un generador. Una dessaladora per osmosi inversa va produir aigua potable. Tot s’enviava a la base naval HMAS Stirling. [Tethys, ARENA, Wikipedia]"],
+sun:["El Sol","Marca l’hora i l’estació. Al model, a l’hivern austral hi ha un ± 25 % més d’onatge, i el Sol també fa una part de la marea. El vent i l’onatge venen de l’oceà Meridional. [model; Wikipedia]"],
+moon:["La Lluna","Fa la major part de la marea. A Perth la marea és sobretot diürna, de 0,5 m habituals, i de més d’1 m en vives. La profunditat de la boia canvia amb la marea. [Fremantle Ports; model]"]};
+function pick(k){sel=k;$("info").innerHTML="<b>"+INFO[k][0]+"</b><p>"+INFO[k][1]+"</p>"}pick("buoy");
+
+function setup(id,r){var c=$(id),w=c.parentElement.clientWidth-28,d=window.devicePixelRatio||1,h=w*r;c.style.height=h+"px";c.width=w*d;c.height=h*d;var g=c.getContext("2d");g.setTransform(d,0,0,d,0,0);cx[id]={g:g,w:w,h:h}}
+function sizes(){setup("c1",.56);setup("c2",.26)}
+function labels(){var m={wh:fmt(S.H,1)+" m",wt:fmt(S.T,1)+" s",wn:S.N,doy:"dia "+S.doy,hr:("0"+Math.floor(S.hr)).slice(-2)+":"+("0"+Math.floor((S.hr%1)*60)).slice(-2),age:"dia "+fmt(S.age,1),dist:fmt(S.dist)+" km",decl:fmt(S.decl,1)+"°",spd:fmt(S.spd,1)+" h/s"};for(var k in m)$("o_"+k).textContent=m[k]}
+function sync(){for(var k in key)$(k).value=S[key[k]]}
+Object.keys(key).forEach(function(k){$(k).oninput=function(){S[key[k]]=+this.value;labels()}});
+$("play").onclick=function(){play=!play;this.textContent=play?"⏸ Pausar":"▶ Reprendre"};
+document.querySelectorAll("[data-p]").forEach(function(b){b.onclick=function(){var p=this.dataset.p;if(p==="calm"){S.H=1;S.T=7}if(p==="norm"){S.H=2;S.T=8}if(p==="storm"){S.H=4.5;S.T=12;S.doy=196}if(p==="new")S.age=0;if(p==="full")S.age=14.8;sync();labels()}});
+
+function sky(){var phi=-32.2*D2R,dS=-23.44*D2R*Math.cos(2*Math.PI*(S.doy+10)/365),H=(S.hr-12)*15*D2R,D=2*Math.PI*S.age/29.53,dM=S.decl*D2R,Hm=H-D;
+return{dS:dS,D:D,dM:dM,H:H,Hm:Hm,sa:Math.asin(Math.sin(phi)*Math.sin(dS)+Math.cos(phi)*Math.cos(dS)*Math.cos(H)),ma:Math.asin(Math.sin(phi)*Math.sin(dM)+Math.cos(phi)*Math.cos(dM)*Math.cos(Hm))}}
+function tideF(k){var fm=Math.pow(384400/S.dist,3),Rd=.62*(.72*fm*Math.abs(Math.sin(2*k.dM))/.84+.28*Math.abs(Math.sin(2*k.dS))/.73),Rm=.2*fm,Rs=.09,R2=Math.sqrt(Rm*Rm+Rs*Rs+2*Rm*Rs*Math.cos(2*k.D)),tl=S.age/29.53*24.84;
+return function(t){return Rd/2*Math.cos(2*Math.PI*(t-tl)/24.84)+R2/2*Math.cos(2*Math.PI*(t-tl)/12.42)}}
+function p1(H,T,tide){if(H<.5)return 0;var kk=2*Math.PI/(1.56*T*T),f=Math.exp(-2*kk*tide);return Math.min(240,.49*H*H*T*11*.3*f)}
+
+function moonDisc(g,x,y,r,D){var f=(1-Math.cos(D))/2,wax=Math.sin(D)>0;g.save();g.beginPath();g.arc(x,y,r,0,7);g.clip();g.fillStyle="#f1f1e4";g.fillRect(x-r,y-r,2*r,2*r);g.fillStyle="#2b3752";g.beginPath();g.arc(x+(wax?-2*r*f:2*r*f),y,r,0,7);g.fill();g.restore();g.strokeStyle="#ffffff55";g.beginPath();g.arc(x,y,r,0,7);g.stroke()}
+function poly(pts,t){var L=[],tot=0,i;for(i=1;i<pts.length;i++){var d=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);L.push(d);tot+=d}var s=(t%1)*tot;for(i=0;i<L.length;i++){if(s<=L[i]){var u=s/L[i];return[pts[i][0]+(pts[i+1][0]-pts[i][0])*u,pts[i][1]+(pts[i+1][1]-pts[i][1])*u]}s-=L[i]}return pts[pts.length-1]}
+
+function scene(k,tideV,He,P1,ptot){var o=cx.c1,g=o.g,w=o.w,h=o.h,SEA=h*.4,BED=h*.88,Z=h*.032,A=He/2*Z,L=w*(.12+S.T*.012),LAND=SEA-.05*h;hot=[];
+function surf(x){return SEA-tideV*Z-A*Math.sin(2*Math.PI*(x/L-wt/S.T))}
+var t=Math.max(0,Math.min(1,(k.sa/D2R+6)/18)),c1=[[10,24,48],[159,216,240]],c2=[[19,41,74],[230,246,251]];
+function mix(a,b){return"rgb("+[0,1,2].map(function(i){return Math.round(a[i]+(b[i]-a[i])*t)}).join(",")+")"}
+var sg=g.createLinearGradient(0,0,0,SEA);sg.addColorStop(0,mix(c1[0],c1[1]));sg.addColorStop(1,mix(c2[0],c2[1]));g.fillStyle=sg;g.fillRect(0,0,w,h);
+if(t<.6){g.fillStyle="rgba(255,255,255,"+(.8-t)+")";for(var i=0;i<40;i++)g.fillRect((i*97.3)%w,(i*53.1)%(SEA*.8),1.6,1.6)}
+function body(a,H,r,col,name){if(a<-.1)return;var x=w*(.5+.45*Math.sin(H)),y=SEA*.95-Math.max(a,0)/(Math.PI/2)*SEA*.8;if(name==="sun"){var gl=g.createRadialGradient(x,y,2,x,y,r*3);gl.addColorStop(0,"rgba(255,200,80,.9)");gl.addColorStop(1,"rgba(255,200,80,0)");g.fillStyle=gl;g.beginPath();g.arc(x,y,r*3,0,7);g.fill();g.fillStyle=col;g.beginPath();g.arc(x,y,r,0,7);g.fill()}else moonDisc(g,x,y,r,k.D);hot.push({k:name,x:x-r*1.5,y:y-r*1.5,w:r*3,h:r*3})}
+body(k.sa,k.H,w*.022,"#ffcf4d","sun");body(k.ma,k.Hm,w*.016,"#eee","moon");
+g.beginPath();g.moveTo(0,h);for(var x=0;x<=w;x+=6)g.lineTo(x,surf(x));g.lineTo(w,h);var wg=g.createLinearGradient(0,SEA,0,BED);wg.addColorStop(0,"#2aa7c4");wg.addColorStop(1,"#08364f");g.fillStyle=wg;g.fill();
+g.beginPath();for(x=0;x<=w*.66;x+=6)x?g.lineTo(x,surf(x)):g.moveTo(x,surf(x));g.strokeStyle="#d6f3ff";g.lineWidth=2.4;g.stroke();
+g.fillStyle="#c4ab74";g.beginPath();g.moveTo(0,BED);g.lineTo(.5*w,BED);g.lineTo(.64*w,LAND);g.lineTo(w,LAND);g.lineTo(w,h);g.lineTo(0,h);g.fill();g.fillStyle="#6f8f56";g.fillRect(.64*w,LAND-3,w*.36,5);
+var n=S.N,sp=w*.38/n,r=Math.min(Z*5.5,sp*.3),pipe=[[w*.1,BED-5],[.5*w,BED-5],[.64*w,LAND-5],[.76*w,LAND-5]];
+g.strokeStyle="#9ad0e6";g.lineWidth=5;g.beginPath();pipe.forEach(function(p,i){i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1])});g.stroke();hot.push({k:"pipe",x:.3*w,y:BED-14,w:.2*w,h:18});
+var fl=Math.min(1,ptot/(S.N*240)+.08);g.fillStyle="#fff";for(i=0;i<10;i++){var q=poly(pipe,(i/10+wt*.05*(.3+fl*2))%1);g.globalAlpha=.3+.6*fl;g.beginPath();g.arc(q[0],q[1],2.6,0,7);g.fill()}g.globalAlpha=1;
+var depth0=0;for(i=0;i<n;i++){var bx=w*.1+sp*(i+.5),sy=surf(bx),kk=2*Math.PI/(1.56*S.T*S.T),mean=SEA+1.5*Z,by=mean-A*.8*Math.exp(-kk*1.5)*Math.sin(2*Math.PI*(bx/L-wt/S.T)+.4);depth0=(by-sy)/Z;
+g.setLineDash([4,3]);g.strokeStyle="#f5f0e0";g.lineWidth=2;g.beginPath();g.moveTo(bx,by);g.lineTo(bx,BED-14);g.stroke();g.setLineDash([]);
+g.fillStyle="#6b7b84";g.fillRect(bx-10,BED-14,20,10);g.fillStyle="#e8961f";g.strokeStyle="#7a4408";g.lineWidth=2;g.beginPath();g.arc(bx,by,r,0,7);g.fill();g.stroke();
+if(i===0){hot.push({k:"buoy",x:bx-r,y:by-r,w:2*r,h:2*r},{k:"tether",x:bx-5,y:by+r,w:10,h:BED-14-by-r},{k:"pump",x:bx-12,y:BED-16,w:24,h:14})}}
+var px=.78*w,py=LAND;g.fillStyle="#37567a";g.fillRect(px,py-h*.17,w*.13,h*.17);g.fillStyle="#cfe3ee";g.font="700 "+Math.max(10,w*.011)+"px sans-serif";g.fillText("Turbina + generador",px+4,py-h*.19);
+g.save();g.translate(px+w*.045,py-h*.07);g.rotate(wt*(.5+fl*8));g.strokeStyle="#9ad0e6";g.lineWidth=3;for(i=0;i<4;i++){g.rotate(Math.PI/2);g.beginPath();g.moveTo(0,0);g.lineTo(w*.025,0);g.stroke()}g.restore();
+g.fillStyle="#7da7c4";g.fillRect(px+w*.095,py-h*.12,w*.03,h*.12);hot.push({k:"plant",x:px,y:py-h*.17,w:w*.13,h:h*.17});
+g.strokeStyle="#ffd16b";g.lineWidth=2;g.setLineDash([5,4]);g.beginPath();g.moveTo(px+w*.13,py-h*.12);g.lineTo(w*.99,py-h*.12);g.stroke();g.setLineDash([]);g.fillStyle="#ffd16b";g.fillText("→ HMAS Stirling",w*.86,py-h*.135);
+g.fillStyle="#fff";g.font="700 "+Math.max(10,w*.011)+"px sans-serif";g.fillText("Mar",10,SEA+22);g.fillText("Fons marí",10,h-10);
+if(sel&&hot.length){hot.forEach(function(q){if(q.k===sel){g.strokeStyle="#fff";g.lineWidth=2.5;g.strokeRect(q.x-3,q.y-3,q.w+6,q.h+6)}})}
+M.depth=depth0}
+
+function strip(tideAt){var o=cx.c2,g=o.g,w=o.w,h=o.h,ml=34,mb=20,mt=8,mx=Math.max(1,S.N*240);g.clearRect(0,0,w,h);g.strokeStyle=cs("--line");g.fillStyle=cs("--mute");g.font="11px sans-serif";
+for(var i=0;i<=4;i++){var y=mt+(h-mt-mb)*i/4;g.beginPath();g.moveTo(ml,y);g.lineTo(w-6,y);g.stroke();g.fillText(fmt(mx*(1-i/4)),2,y+4)}
+g.fillText("−24 h",ml,h-5);g.fillText("ara",w-26,h-5);
+function line(f,col){g.beginPath();hist.forEach(function(p,j){var x=ml+(w-ml-6)*j/95,y=f(p);j?g.lineTo(x,y):g.moveTo(x,y)});g.strokeStyle=col;g.lineWidth=2.4;g.stroke()}
+line(function(p){return mt+(h-mt-mb)*(1-p.p/mx)},cs("--ok"));line(function(p){return mt+(h-mt-mb)*(1-(p.t+1)/2)},cs("--amber"))}
+
+var last=performance.now();
+function frame(now){var dt=Math.min(.1,(now-last)/1000);last=now;wt+=dt;
+if(play){var dh=dt*S.spd;S.hr+=dh;simH+=dh;if(S.hr>=24){S.hr-=24;S.age=(S.age+1)%29.53;S.doy=S.doy%365+1}sync();labels()}
+var k=sky(),tf=tideF(k),tv=tf(S.hr),
+season=1+.25*Math.cos(2*Math.PI*(S.doy-196)/365),grp=1+.12*Math.sin(wt*.4)+.06*Math.sin(wt*.93),He=S.H*season*grp,
+P1=p1(He,S.T,tv),ptot=P1*S.N;
+if(play){acc+=ptot*dt*S.spd}
+if(simH-lastS>=.25){lastS=simH;hist.push({p:ptot,t:tv});if(hist.length>96)hist.shift()}
+scene(k,tv,He,P1,ptot);strip(tf);
+$("k1").textContent=fmt(He,1);$("k2").textContent=fmt(.49*He*He*S.T,1);$("k3").textContent=(tv>=0?"+":"")+fmt(tv,2);$("k4").textContent=fmt(M.depth||0,1);$("k5").textContent=fmt(ptot);$("k6").textContent=fmt(ptot/(S.N*240)*100)+" %";$("k7").textContent=fmt(ptot*24);$("k8").textContent=fmt(acc);
+requestAnimationFrame(frame)}
+$("c1").addEventListener("click",function(e){var r=this.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;for(var i=hot.length-1;i>=0;i--){var q=hot[i];if(x>=q.x&&x<=q.x+q.w&&y>=q.y&&y<=q.y+q.h){pick(q.k);return}}});
+window.addEventListener("resize",sizes);sizes();labels();requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
